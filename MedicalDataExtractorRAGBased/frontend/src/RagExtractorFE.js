@@ -1,0 +1,148 @@
+import React, { useState, useRef, useEffect} from 'react';
+import axios from 'axios';
+
+export default function RagExtractorFE() {
+    const [result,setResult] = useState("");
+    const [userQuery, setUserQuery] = useState("");
+    const [filepath, setFile] = useState(null);
+    const [loadingStatus, setLoading] = useState(false);
+    const [sources, setSources] = useState([]);
+
+    const myFormData = new FormData();
+    myFormData.append("userQuery", userQuery);
+    myFormData.append("file", filepath);
+
+    const handleApplication = async () => {
+        if (!filepath) return alert("Please select a file");
+        setLoading(true);
+        setSources([]);
+        setResult("");
+        try {
+            // Use JSON object instead of FormData for better Spring Boot compatibility
+            const response = await axios.post("http://localhost:8080/api/SearchRAG", myFormData);
+            setResult(response.data.queryResult);
+            setSources(response.data.sources || []);
+        } catch (error) {
+            console.error("Error during extraction:", error);
+        }
+        finally {
+            setLoading(false);
+        }
+    };
+    const styles = {
+        appContainer: {
+            display: 'flex',
+            height: '100vh',
+            width: '100vw',
+            backgroundColor: '#f1f5f9',
+            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+            overflow: 'hidden' // Prevents the whole body from scrolling
+        },
+        // COLUMN 1: CONFIGURATION (Left)
+        sidebar: {
+            width: '320px',
+            backgroundColor: '#dddddd',
+            borderRight: '1px solid #e2e8f0',
+            padding: '30px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            boxShadow: '2px 0 5px rgba(0,0,0,0.02)'
+        },
+        // COLUMN 2: AI RESPONSE (Center)
+        mainWorkspace: {
+            flex: 1,
+            padding: '32px',
+            overflowY: 'auto', // Independent scrolling for the center
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            backgroundColor: '#eeeeee'
+        },
+        // COLUMN 3: SOURCE CONTEXT (Right)
+        contextPanel: {
+            width: '350px',
+            backgroundColor: '#dddddd',
+            borderLeft: '1px solid #e2e8f0',
+            padding: '20px',
+            overflowY: 'auto'
+        },
+        responseCard: {
+            width: '100%',
+            maxWidth: '800px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '40px',
+            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+            minHeight: 'fit-content' // Ensures growth
+        },
+        sourceCard: {
+            backgroundColor: 'white',
+            padding: '12px',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0',
+            fontSize: '0.85rem',
+            marginBottom: '12px',
+            color: '#475569'
+        }
+    };
+
+    return (
+        <div style={styles.appContainer}>
+            {/* 1. Left Controls */}
+            <aside style={styles.sidebar}>
+                <h3 style={{ fontSize: '1.25rem', color: '#0f172a' }}>⚕️ MedExtract AI<br/>Agentic RAG Extractor</h3>
+                <hr style={{ border: '0.5px solid #f1f5f9' }} />
+                <div>
+                    <label style={{ fontWeight: '600', fontSize: '0.8rem', display: 'block', marginBottom: '8px' }}>DOCUMENT UPLOAD</label>
+                    <input type="file" onChange={(e) => setFile(e.target.files[0])} style={{ fontSize: '0.8rem' }} />
+                </div>
+
+                <div>
+                    <label style={{ fontWeight: '600', fontSize: '0.8rem', display: 'block', marginBottom: '8px' }}>EXTRACTION QUERY</label>
+                    <textarea
+                        value={userQuery}
+                        onChange={(e) => setUserQuery(e.target.value)}
+                        placeholder="What do you need to extract?"
+                        style={{ width: '100%', height: '120px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '10px' }}
+                    />
+                </div>
+
+                <button onClick={handleApplication} disabled={loadingStatus} style={{
+                    backgroundColor: loadingStatus ? '#94a3b8' : '#2563eb',
+                    color: 'white', padding: '12px', borderRadius: '6px', cursor: 'pointer', border: 'none', fontWeight: 'bold'
+                }}>
+                    {loadingStatus ? "Analyzing..." : "Run Extraction"}
+                </button>
+                <label style={{fontSize: '0.8rem', fontWeight: '600',marginTop: '50px', color: '#11aaaa'}} > Powered by Qwen 2.5 7B Model and BioBERT embeddings.<br/> <br/> </label>
+                <label style={{fontSize: '0.8rem', fontWeight: '600', color: '#666666'}} > Generated by Nitish Kumar Sinha (NitishKumarSinha213@gmail.com, Nitish_213@yahoo.co.in) </label>
+
+
+            </aside>
+
+            {/* 2. Center AI Output */}
+            <main style={styles.mainWorkspace}>
+                <div style={styles.responseCard}>
+                    <h4 style={{ color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', fontSize: '0.75rem' }}>Extracted Output:</h4>
+                    <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#1e293b' }}>
+                        {result || (loadingStatus ? "Our AI agent is scanning the vectors and generating the medical summary..." : "Upload a PDF and click 'Run Extraction' to start.")}
+                    </div>
+                </div>
+            </main>
+
+            {/* 3. Right Context Gutter */}
+            <section style={styles.contextPanel}>
+                <h4 style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '16px' }}>Sample Retrieved Context (3000ch)</h4>
+                {sources.length === 0 ? (
+                    <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Source chunks will appear here after extraction.</p>
+                ) : (
+                    sources.map((src, i) => (
+                        <div key={i} style={styles.sourceCard}>
+                            <span style={{ color: '#2563eb', fontWeight: 'bold' }}>#{i+1}</span> {src}
+                        </div>
+                    ))
+                )}
+            </section>
+        </div>
+    );
+}
