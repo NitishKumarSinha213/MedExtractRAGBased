@@ -1,6 +1,8 @@
 ⚕️ MedExtract AI: Agentic RAG Extractor
 MedExtract AI is a high-precision medical data extraction framework built with Java 21, Spring Boot, and LangChain4j. It utilizes a "Small-to-Big" (Parent Document) Retrieval-Augmented Generation (RAG) pattern to ensure medical headers (like Patient Names) are never lost during semantic search, even when using local LLMs.
 
+Demo Video : https://drive.google.com/file/d/1lXYIEPJMYdFFkGdGa9h9DIo7ODWmR6n8/view?usp=sharing
+
 🚀 Key Features
 1. Parent Document Retrieval: Decouples search precision from LLM context. Uses 300-character "child" chunks for high-accuracy vector matching and 3000-character "parent" blocks for full clinical context.
 2. Local-First Intelligence: Powered by Ollama (Qwen 2.5 7B) and BioBERT embeddings—ensuring patient data never leaves your local environment.
